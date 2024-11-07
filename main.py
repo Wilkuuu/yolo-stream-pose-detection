@@ -16,6 +16,13 @@ def adjust_brightness_contrast(frame, alpha=1.0, beta=50):
     """
     return cv2.convertScaleAbs(frame, alpha=alpha, beta=beta)
 
+KEYPOINT_LABELS = [
+    "Nose", "Left Eye", "Right Eye", "Left Ear", "Right Ear",
+    "Left Shoulder", "Right Shoulder", "Left Elbow", "Right Elbow",
+    "Left Wrist", "Right Wrist", "Left Hip", "Right Hip",
+    "Left Knee", "Right Knee", "Left Ankle", "Right Ankle"
+]
+
 
 def main():
     cap = cv2.VideoCapture(0)  # Open the webcam (0 is usually the default webcam)
@@ -31,6 +38,12 @@ def main():
         frame = adjust_brightness_contrast(frame, alpha=alpha, beta=beta)
         # Run pose detection
         results = model(frame)  # Inference with YOLOv8 pose model
+        # Extract and display keypoints
+        for i, pose in enumerate(results[0].keypoints):
+            # `pose` contains keypoints for a single detected person
+            print(f"Person {i + 1} Keypoints:")
+            for j, keypoint in enumerate(pose.xy):
+                print(f" - Keypoint {j}: x={keypoint[0]}, y={keypoint[1]}, confidence={keypoint[2]}")
 
         # Extract the annotated image from the results
         annotated_frame = results[0].plot()  # YOLOv8 provides a plotting function to visualize results
