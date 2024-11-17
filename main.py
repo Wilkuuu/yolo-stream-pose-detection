@@ -1,4 +1,5 @@
 import cv2
+import torch
 from ultralytics import YOLO
 # import torch
 import utils
@@ -25,6 +26,8 @@ KEYPOINT_LABELS = [
 
 
 def main():
+    # droidcam_url = "http://192.168.8.120:4747/video"
+    # cap = cv2.VideoCapture(droidcam_url)
     cap = cv2.VideoCapture(0)  # Open the webcam (0 is usually the default webcam)
     alpha = .7  # Contrast
     beta = .2
@@ -38,14 +41,16 @@ def main():
         frame = adjust_brightness_contrast(frame, alpha=alpha, beta=beta)
         # Run pose detection
         results = model(frame)  # Inference with YOLOv8 pose model
-        # Extract and display keypoints
-        for i, pose in enumerate(results[0].keypoints):
-            # `pose` contains keypoints for a single detected person
-            print(f"Person {i + 1} Keypoints:")
-            for j, keypoint in enumerate(pose.xy):
-                print(f" - Keypoint {j}: x={keypoint[0]}, y={keypoint[1]}, confidence={keypoint[2]}")
+        results_tensor = torch.tensor(results[0].keypoints.xy)
+        kp = results_tensor[0]  # Shape: (17, 2)
 
-        # Extract the annotated image from the results
+        # Merge keypoints with labels
+        merged_keypoints = {label: tuple(coord.tolist()) for label, coord in zip(KEYPOINT_LABELS, kp)}
+
+        # Display the result
+        for label, coord in merged_keypoints.items():
+            print(f"{label}: {coord}")
+
         annotated_frame = results[0].plot()  # YOLOv8 provides a plotting function to visualize results
 
         # Display the resulting frame
